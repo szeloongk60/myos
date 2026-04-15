@@ -1,0 +1,78 @@
+00000000000d[SIM   ] searching for component 'log' in list 'bochs'
+00000000000d[SIM   ] searching for component 'prefix' in list 'log'
+00000000000i[      ] Bochs x86 Emulator 3.0
+00000000000i[      ]   Built from GitHub snapshot on February 16, 2025
+00000000000i[      ]   Timestamp: Sun Feb 16 10:00:00 CET 2025
+00000000000i[      ] System configuration
+00000000000d[SIM   ] searching for component 'cpu' in list 'bochs'
+00000000000d[SIM   ] searching for component 'n_threads' in list 'cpu'
+00000000000d[SIM   ] searching for component 'cpu' in list 'bochs'
+00000000000d[SIM   ] searching for component 'n_cores' in list 'cpu'
+00000000000i[      ]   processors: 1 (cores=1, HT threads=1)
+00000000000i[      ]   A20 line support: yes
+00000000000d[SIM   ] searching for component 'cpu' in list 'bochs'
+00000000000d[SIM   ] searching for component 'msrs' in list 'cpu'
+00000000000d[SIM   ] searching for component 'cpu' in list 'bochs'
+00000000000d[SIM   ] searching for component 'ips' in list 'cpu'
+00000000000i[      ] IPS is set to 10000000
+00000000000i[      ] CPU configuration
+00000000000i[      ]   SMP support: no
+00000000000d[SIM   ] searching for component 'cpu' in list 'bochs'
+00000000000d[SIM   ] searching for component 'model' in list 'cpu'
+00000000000i[      ]   Using pre-defined CPU configuration: corei7_haswell_4770
+00000000000i[      ] Optimization configuration
+00000000000i[      ]   RepeatSpeedups support: yes
+00000000000i[      ]   Fast function calls: yes
+00000000000i[      ]   Handlers Chaining speedups: yes
+00000000000i[      ] Devices configuration
+00000000000i[      ]   PCI support: i440FX i430FX i440BX
+00000000000i[      ]   Network devices support: NE2000 E1000
+00000000000i[      ]   Sound support: SB16 ES1370
+00000000000i[      ]   USB support: UHCI OHCI EHCI xHCI
+00000000000i[      ]   VGA extension support: vbe cirrus voodoo
+00000000000i[IMG   ] Disk image modules
+00000000000i[IMG   ]   flat concat sparse dll growing undoable volatile vmware3
+00000000000i[IMG   ]   vmware4 vbox vpc vvfat
+00000000000i[NETCTL] Networking modules
+00000000000i[NETCTL]   null vnet slirp socket win32
+00000000000i[SNDCTL] Sound drivers
+00000000000i[SNDCTL]   dummy file win
+00000000000i[USBCTL] Pluggable USB devices
+00000000000i[USBCTL]   floppy mouse tablet keypad keyboard hub disk cdrom
+00000000000i[USBCTL]   printer
+00000000000d[SIM   ] searching for component 'memory' in list 'bochs'
+00000000000d[SIM   ] searching for component 'standard' in list 'memory'
+00000000000d[SIM   ] searching for component 'rom' in list 'standard'
+00000000000d[SIM   ] searching for component 'file' in list 'rom'
+00000000000d[SIM   ] searching for component 'general' in list 'bochs'
+00000000000d[SIM   ] searching for component 'benchmark' in list 'general'
+00000000000d[SIM   ] searching for component 'general' in list 'bochs'
+00000000000d[SIM   ] searching for component 'dumpstats' in list 'general'
+00000000000d[SIM   ] searching for component 'memory' in list 'bochs'
+00000000000d[SIM   ] searching for component 'standard' in list 'memory'
+00000000000d[SIM   ] searching for component 'ram' in list 'standard'
+00000000000d[SIM   ] searching for component 'guest' in list 'ram'
+00000000000d[SIM   ] searching for component 'memory' in list 'bochs'
+00000000000d[SIM   ] searching for component 'standard' in list 'memory'
+00000000000d[SIM   ] searching for component 'ram' in list 'standard'
+00000000000d[SIM   ] searching for component 'host' in list 'ram'
+00000000000d[SIM   ] searching for component 'memory' in list 'bochs'
+00000000000d[SIM   ] searching for component 'standard' in list 'memory'
+00000000000d[SIM   ] searching for component 'ram' in list 'standard'
+00000000000d[SIM   ] searching for component 'block_size' in list 'ram'
+00000000000i[MEM0  ] allocated memory at 000001D137D02040. after alignment, vector=000001D137D03000, block_size = 128K
+00000000000i[MEM0  ] 16.00MB
+00000000000i[MEM0  ] mem block size = 0x00020000, blocks=128
+00000000000d[SIM   ] searching for component 'pci' in list 'bochs'
+00000000000d[SIM   ] searching for component 'enabled' in list 'pci'
+00000000000d[SIM   ] searching for component 'bochs' in list 'bochs'
+00000000000d[SIM   ] searching for component 'memory' in list 'bochs'
+00000000000d[SIM   ] searching for component 'standard' in list 'memory'
+00000000000d[SIM   ] searching for component 'rom' in list 'standard'
+00000000000d[SIM   ] searching for component 'address' in list 'rom'
+00000000000d[SIM   ] searching for component 'memory' in list 'bochs'
+00000000000d[SIM   ] searching for component 'standard' in list 'memory'
+00000000000d[SIM   ] searching for component 'rom' in list 'standard'
+00000000000d[SIM   ] searching for component 'file' in list 'rom'
+00000000000p[MEM0  ] >>PANIC<< ROM: couldn't open ROM image file 'BIOS-bochs-latest'.
+00000000000i[SIM   ] quit_sim called with exit code 1
