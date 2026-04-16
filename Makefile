@@ -63,6 +63,7 @@ haribote.img : $(BUILD)/ipl10.bin $(BUILD)/haribote.sys Makefile rule110.bf
 		copy from:1.lz4 to:@: \
 		copy from:HZK16.lz4 to:@: \
 		copy from:msotxt.lz4 to:@: \
+		copy from:imgchat.dat to:@: \
 		imgout:haribote.img
 
 # 其他指令

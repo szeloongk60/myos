@@ -109,7 +109,7 @@ void init_screen8(char *vram, int x, int y)
 	return;
 }
 
-void putfont8(int *vram, int xsize, int x, int y, int c, char *font)
+void putfont8(int *vram, int xsize, int x, int y, int c, char *font,int st)
 {
 	int i;
     unsigned int *p; // 重点：由 char* 改为 unsigned int*
@@ -119,7 +119,12 @@ void putfont8(int *vram, int xsize, int x, int y, int c, char *font)
     for (i = 0; i < 16; i++) {
         // 这里的 p 每次加 1 都会自动跳 4 字节
        // p = vram + (y + i) * xsize + x; 
-	   p = (unsigned int *)((char *)vram + (y + i) * xsize + x * 4);
+	  // 
+	  if(st== 1){
+	  p = (unsigned int *)((char *)vram + (y + i) * xsize * 4 + x * 4);
+	  }else{
+		  p = (unsigned int *)((char *)vram + (y + i) * xsize + x * 4);
+	  }
         d = font[i];
         
         // 现在的 p[0] 到 p[7] 对应横向的 8 个完整像素
@@ -139,7 +144,7 @@ void putfonts8_asc(int *vram, int xsize, int x, int y, int c, unsigned char *s)
 	extern char hankaku[4096];
 	/* C语言中，字符串都是以0x00结尾 */
 	for (; *s != 0x00; s++) {
-		putfont8(vram, xsize, x, y, c, hankaku + *s * 16);
+		putfont8(vram, xsize, x, y, c, hankaku + *s * 16,0);
 		x += 8;
 	}
 	return;
@@ -151,7 +156,18 @@ void putfonts8_ascAll(int x, int y,  unsigned char *s)
 	struct BOOTINFO *binfo2 = (struct BOOTINFO *) ADR_BOOTINFO;
 	/* C语言中，字符串都是以0x00结尾 */
 	for (; *s != 0x00; s++) {
-		putfont8(binfo2->vram, binfo2->pitch, x, y, 15, hankaku + *s * 16);
+		putfont8(binfo2->vram, binfo2->pitch, x, y, 15, hankaku + *s * 16,0);
+		x += 8;
+	}
+	return;
+}
+void putfonts8_sht(struct SHEET *sht,int x, int y,  unsigned char *s,int st)
+{
+	extern char hankaku[4096];
+	//struct BOOTINFO *binfo2 = (struct BOOTINFO *) ADR_BOOTINFO;
+	/* C语言中，字符串都是以0x00结尾 */
+	for (; *s != 0x00; s++) {
+		putfont8(sht->buf, sht->bxsize, x, y, 0xffffff, hankaku + *s * 16,st);
 		x += 8;
 	}
 	return;
@@ -290,12 +306,13 @@ sheet_setbuf(sheet, new_mem, width, height, 0xFFffFF);
 	
 }
 
-void putfonts8_chinese(struct SHEET *sht, int x, int y, int color, unsigned char *gbk_str, unsigned char *hzk_ptr) {
+void putfonts8_chinese(struct SHEET *sht, int x, int y,  unsigned char *gbk_str) {
     int i, j, k;
     unsigned char *font;
     unsigned char d;
     int qm, wm;
     unsigned long offset;
+	 extern unsigned char *hzk_buf;
 
     // 获取区位码：GBK高位是区，低位是位
     // 算法：区码 = 第一字节 - 0xA0, 位码 = 第二字节 - 0xA0
@@ -305,7 +322,7 @@ void putfonts8_chinese(struct SHEET *sht, int x, int y, int color, unsigned char
     // 计算在 HZK16 中的偏移量
     // 每个区有 94 个位，每个字占 32 字节
     offset = ((qm - 1) * 94 + (wm - 1)) * 32;
-    font = hzk_ptr + offset;
+    font = hzk_buf + offset;
 
     for (i = 0; i < 16; i++) { // 16行点阵
         // 每一行占 2 字节 (16位)
@@ -316,10 +333,44 @@ void putfonts8_chinese(struct SHEET *sht, int x, int y, int color, unsigned char
                 if ((d & (0x80 >> j)) != 0) {
                     // 在指定位置画点。注意检查越界情况防止死机
                     if (x + k * 8 + j < sht->bxsize && y + i < sht->bysize) {
-                        sht->buf[(y + i) * sht->bxsize + (x + k * 8 + j)] = color;
+                        sht->buf[(y + i) * sht->bxsize + (x + k * 8 + j)] = 0xffffff;
                     }
                 }
             }
         }
     }
+}
+
+void showmsg(char *file_buf, int index, struct SHEET *sht, int x, int y) {
+    // 1. 获取总数（前4字节）
+    unsigned int count = *((unsigned int *)file_buf);
+    
+    if (index < 1 || index > count) return;
+
+    // 2. 获取对应的偏移量
+    // 偏移量表从第4字节开始，每个占4字节
+    unsigned int *offset_table = (unsigned int *)(file_buf + 4);
+    unsigned int my_offset = offset_table[index - 1];
+
+    // 3. 找到字符串并打印
+    char *msg_ptr = file_buf + my_offset;
+	int cur_x = x;
+	int i;
+    for ( i = 0; msg_ptr[i] != 0x00; ) {
+        if ((unsigned char)msg_ptr[i] > 0x80) {
+            // 是中文，调用你原本画单个字的函数
+            // 注意：这里传的是 &msg_ptr[i]
+            putfonts8_chinese(sht, cur_x, y, &msg_ptr[i]); 
+            
+            cur_x += 16; // 坐标右移一个汉字的宽度
+            i += 2;      // 指针跳过 GBK 的 2 个字节
+        } else {
+            // 是英文/半角符号
+            //putfonts8_asc(sht, cur_x, y, 15, &msg_ptr[i]);
+            cur_x += 8;  // 坐标右移一个英文宽度
+            i += 1;      // 指针跳过 1 个字节
+        }
+    }
+    // -------------------------------
+   // putfonts8_chinese(sht, x, y, msg_ptr);
 }

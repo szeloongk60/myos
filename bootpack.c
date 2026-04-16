@@ -6,7 +6,9 @@
 #define KEYCMD_LED		0xed
 struct BOOTINFO *binfo = (struct BOOTINFO *) ADR_BOOTINFO;
 struct SHEET*sht_mouse;
+struct SHEET*sht_back;
 unsigned char *hzk_buf;
+unsigned char *chat_buf;
 void HariMain(void)
 {
 	////////////////////////
@@ -25,7 +27,7 @@ void HariMain(void)
 	unsigned int *buf_back,buf_mouse[256];
 struct TASK *task_a, *task_cons;
 struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
-	struct SHEET *sht_back, *sht_win, *sht_cons;
+	struct SHEET *sht_back,*sht_win, *sht_cons;
 	//struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
 	//unsigned char *buf_back, buf_mouse[256], *buf_win, *buf_cons;
 	//struct SHEET *sht_back, *sht_mouse, *sht_win, *sht_cons;
@@ -89,6 +91,7 @@ task_a = task_init(memman);
 	sheet_setbuf(sht_win,win_mem,600,600,0xffffff);
 	 char *img=memget(300000);
 	 int tmp;
+	 
 	tmp=readfile("1.lz4",img);
 	
 	load_mx_img(img);
@@ -98,11 +101,17 @@ task_a = task_init(memman);
 	displayimage_sheet (img,sht_mouse,&my_mouse_mem) ;
 	hzk_buf=lz4read512k("HZK16.lz4");
 	draw_sprite(sht_win, 0, 0, 704,0, 901,151,0);
+	//chat_buf=
+	tmp=readfile("imgchat.dat",img);
+	showmsg(img, 25, sht_win, 16, 1);
+	showmsg(img, 23, sht_win, 16, 30);
+	showmsg(img, 24, sht_win, 16, 65);
 	unsigned char *msg = lz4read512k("msotxt.LZ4");
 	if (msg != 0) { 
     int i = 0;
     int cur_x = 100;
     int y = 0;
+	char txt[2];
     // 4. 必须写循环！TXT 是 GBK 编码，每字跳 2 字节
     while (msg[i] != 0x00) {
         // 调用单字渲染
@@ -118,20 +127,26 @@ task_a = task_init(memman);
 			goto tout;
 			}
 		if ((unsigned char)msg[i] > 0x80) {
-        putfonts8_chinese(sht_back, cur_x,y, 0xFFFF00, &msg[i], hzk_buf);
+        putfonts8_chinese(sht_back, cur_x,y, &msg[i]);
         
         cur_x += 16; // 坐标右移
 		
 			 i += 2;      // 指针跳过 GBK 的 2 个字节
 		}else {
+			
         // 【英文/数字】
         // 这里调你原本显示 ASCII 的函数，比如 putfonts8_asc
 		//(int *vram, int xsize, int x, int y, int c, unsigned char *s)
-        putfonts8_asc(sht_back,sht_back->bxsize ,cur_x, y, 0xFFFF00, msg[i]);
+		txt[0]=msg[i];
+		txt[1]=0x0;
+		//sprintf(txt,"%s",&msg[i]);
+		//putfonts8_ascAll(100, y, &msg[i]);
+		putfonts8_sht(sht_back ,cur_x, y, txt,1);
+       // putfonts8_asc(sht_back,sht_back->bxsize ,cur_x, y, 0xFFFF00, "a");
         cur_x += 8;  // 英文宽 8
         i += 1;      // 英文只跳 1 字节
 		}
-		if(cur_x>binfo->scrnx){
+		if(cur_x>binfo->scrnx-100){
 			y+=24;
 			cur_x=100;
 			}
@@ -208,7 +223,7 @@ boxfill8(binfo->vram,binfo->scrnx,0,16,1,100,100);
 					}
 					sheet_slide(sht_mouse, mx, my);/* 包含sheet_refresh含sheet_refresh */
 					if ((mdec.btn & 0x01) != 0) { /* 按下左键、移动sht_win */
-						sheet_slide(sht_win, mx - 80, my - 8);
+						sheet_slide(sht_win, mx - 8, my - 8);
 						goto out;
 					}
 				}

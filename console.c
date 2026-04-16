@@ -309,6 +309,7 @@ void myconsole()
 	};
 	
 	struct BOOTINFO *binfo2 = (struct BOOTINFO *) ADR_BOOTINFO;
+	extern struct SHEET* sht_back;
 	char  s[30],cmdline[30];
 	int i;
 	int fifobuf[128];
@@ -404,6 +405,8 @@ void myconsole()
 		//	s[0] = i - 256;
 			s[1] = 0;
 			cmdline[ii] = keytable0[i - 256];
+			//putfonts8_sht(sht_back,100,y,s,1);
+			//putfonts8_ascAll
 			putfonts8_ascAll(x,y,s);
 			//sprintf(s,"%02X",i);
 			//putfonts8_ascAll(x,y+16,s);
