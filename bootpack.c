@@ -106,54 +106,7 @@ task_a = task_init(memman);
 	showmsg(img, 25, sht_win, 16, 1);
 	showmsg(img, 23, sht_win, 16, 30);
 	showmsg(img, 24, sht_win, 16, 65);
-	unsigned char *msg = lz4read512k("msotxt.LZ4");
-	if (msg != 0) { 
-    int i = 0;
-    int cur_x = 100;
-    int y = 0;
-	char txt[2];
-    // 4. 必须写循环！TXT 是 GBK 编码，每字跳 2 字节
-    while (msg[i] != 0x00) {
-        // 调用单字渲染
-		if( msg[i]== 0x0d&&msg[i+1]==0x0a)
-			{
-				i=i+2;
-				cur_x=100;
-				y+=24;
-				goto tout;
-			}
-		if(msg[i] ==0x20){
-			i++;
-			goto tout;
-			}
-		if ((unsigned char)msg[i] > 0x80) {
-        putfonts8_chinese(sht_back, cur_x,y, &msg[i]);
-        
-        cur_x += 16; // 坐标右移
-		
-			 i += 2;      // 指针跳过 GBK 的 2 个字节
-		}else {
-			
-        // 【英文/数字】
-        // 这里调你原本显示 ASCII 的函数，比如 putfonts8_asc
-		//(int *vram, int xsize, int x, int y, int c, unsigned char *s)
-		txt[0]=msg[i];
-		txt[1]=0x0;
-		//sprintf(txt,"%s",&msg[i]);
-		//putfonts8_ascAll(100, y, &msg[i]);
-		putfonts8_sht(sht_back ,cur_x, y, txt,1);
-       // putfonts8_asc(sht_back,sht_back->bxsize ,cur_x, y, 0xFFFF00, "a");
-        cur_x += 8;  // 英文宽 8
-        i += 1;      // 英文只跳 1 字节
-		}
-		if(cur_x>binfo->scrnx-100){
-			y+=24;
-			cur_x=100;
-			}
-			tout:
-       
-    }
-	}
+	
 	mx = (binfo->scrnx - 16) / 2;
 my = (binfo->scrny - 16) / 2;
 

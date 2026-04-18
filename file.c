@@ -63,7 +63,7 @@ unsigned short make_time(int hour, int min, int sec) {
     return (unsigned short)((hour << 11) | (min << 5) | (sec / 2));
 }
 
-void createfile(char *filename, char *buf)
+void createfile3(char *filename, char *buf)
 {
     int i, j;
     int cluster = -1;
@@ -123,6 +123,74 @@ file_readfat(fat, (unsigned char *) (ADR_DISKIMG + 0x000200));
 	  floppy_write_lba(10,savefat);
 	 floppy_write_lba(19,finfo);
 	 
+}
+void createfile(char *filename, char *buf)
+{
+    int i, j, cluster = -1;
+    struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
+    unsigned char *diskimg = (unsigned char *) ADR_DISKIMG;
+
+    // 1. 读入 9 个扇区的 FAT 表
+    for (i = 0; i < 9; i++) {
+        fdc_read_lba((unsigned char *)(ADR_DISKIMG + 0x000200 + i * 512), 1 + i);
+    }
+
+    int *fat = (int *) memman_alloc_4k(memman, 4 * 2880);
+    file_readfat(fat, (unsigned char *)(ADR_DISKIMG + 0x000200));
+
+    // 2. 找空簇并标记 EOF
+    for (i = 2; i < 2880; i++) {
+        if (fat[i] == 0) { cluster = i; break; }
+    }
+    if (cluster == -1) return;
+    fat[cluster] = 0xFFF; 
+
+    // 3. 写文本数据到正确的物理地址 (扇区 33 起始)
+    int size = 0;
+    while (buf[size] != 0) size++;
+    unsigned char *data_ptr = diskimg + 0x4200 + (cluster - 2) * 512;
+    for (i = 0; i < size; i++) {
+        data_ptr[i] = buf[i];
+    }
+    // 把这 1 个扇区的数据写回磁盘
+    floppy_write_lba(33 + (cluster - 2), data_ptr);
+
+    // 4. 读入目录区 (LBA 19)
+    fdc_read_lba((unsigned char *)(ADR_DISKIMG + 0x002600), 19);
+    struct FILEINFO *finfo = (struct FILEINFO *)(ADR_DISKIMG + 0x002600);
+
+    // 5. 寻找空目录项并填充信息
+    for (i = 0; i < 224; i++) {
+        if (finfo[i].name[0] == 0x00 || finfo[i].name[0] == 0xE5) {
+            // 填充文件名 (填充空格保持 8+3 格式)
+            for (j = 0; j < 8; j++) finfo[i].name[j] = ' ';
+            for (j = 0; j < 3; j++) finfo[i].ext[j] = ' ';
+
+            char *p = filename;
+            for (j = 0; j < 8 && *p && *p != '.'; j++) finfo[i].name[j] = *p++;
+            if (*p == '.') p++;
+            for (j = 0; j < 3 && *p; j++) finfo[i].ext[j] = *p++;
+
+            finfo[i].type = 0x20;      // 归档文件
+            finfo[i].clustno = cluster;
+            finfo[i].size = size;
+            
+            // 写入你之前提到的日期时间
+            finfo[i].date = 0x5CB2; // 示例：2026-04-18
+            finfo[i].time = 0x8800; // 示例：17:00
+            break;
+        }
+    }
+
+    // 6. 最后的“封印”：写回磁盘
+    file_savefat(fat, (unsigned char *)(ADR_DISKIMG + 0x000200));
+    for (i = 0; i < 9; i++) {
+        floppy_write_lba(1 + i, (unsigned char *)(ADR_DISKIMG + 0x000200 + i * 512));
+    }
+    floppy_write_lba(19, (unsigned char *)finfo); 
+
+    // 7. 释放内存
+    memman_free_4k(memman, (int)fat, 4 * 2880);
 }
 void format_to_fat_name(const char *src, char *dest) {
     int i, j;

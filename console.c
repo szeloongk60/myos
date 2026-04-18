@@ -353,10 +353,10 @@ void myconsole()
 				 if(strcmp(cmdline, "F") == 0){
 					
 					boxfill(0,0,0,900,900);
-					char *img=memget(300000);
-					readfile("cur.lz4",img);
+				//	char *img=memget(300000);
+				//	readfile("cur.lz4",img);
 					
-					displayimage(img);
+					//displayimage(img);
 					//test_lz4_compression();
 					 goto out;
 					
@@ -369,6 +369,22 @@ void myconsole()
 					   goto out;
 					//fdc_ready_flag=0;
 					  //io_out8(FDC_DOR, 0x00);   /* 使能控制器，选择驱动器0 */  
+				 }
+				 if (strstr(cmdline, " TO ") != 0) {
+    char *content = cmdline;
+    char *filename;
+    char *sep = strstr(cmdline, " TO ");
+
+    // 1. 在 >> 的位置打断字符串，左边就成了纯内容
+    *sep = 0; 
+    
+    // 2. 右边跳过 " >> " (4个字节) 就是文件名
+    filename = sep + 4;
+    while (*filename == ' ') filename++; // 过滤文件名开头的空格
+	createfile(filename, content);
+	char s[10];
+		
+	 goto out;
 				 }
 				  if(strncmp(cmdline, "READ ", 5) == 0){
 					  int ii;
