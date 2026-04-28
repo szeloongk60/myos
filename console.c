@@ -121,7 +121,7 @@ sheet_setbuf(sht_mouse, mouse, width, height, 0xFFffFF);
 	
 }
 
-
+extern struct SHEET*sht_win;
 void dir()
 {
 	int x,y;
@@ -151,6 +151,10 @@ void dir()
 				}
 		}
 	}
+		
+unsigned char status;
+putfonts8_sht(sht_win,10,99,"int2e",0);
+putfonts8_sht(sht_win,10,90,"int2e",1);
 }
 typedef enum {
     PUSH, POP,ADD, SUB, PRINT, HALT,JMP
@@ -296,7 +300,7 @@ case ']':
 
 void myconsole()
 {
-	
+	putfonts8_ascAll(0,0,"console");
 	static char keytable0[0x80] = {
 		0,   0,   '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '^', 0,   0,
 		'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '@', '[', 0,   0,   'A', 'S',
@@ -310,7 +314,7 @@ void myconsole()
 	
 	struct BOOTINFO *binfo2 = (struct BOOTINFO *) ADR_BOOTINFO;
 	extern struct SHEET* sht_back;
-	char  s[30],cmdline[30];
+	char  s[30],cmdline[100];
 	int i;
 	int fifobuf[128];
 	int ii=0;
@@ -353,7 +357,13 @@ void myconsole()
 				 if(strcmp(cmdline, "F") == 0){
 					
 					boxfill(0,0,0,900,900);
-				//	char *img=memget(300000);
+					
+					char *img=memget(512);
+					//img="testimgggggeeerr";
+					memset(img, 0, 512);
+					strcpy(img, "testimgggggeeerr");    
+					hd_lba("abcd.txt",img,0);
+					
 				//	readfile("cur.lz4",img);
 					
 					//displayimage(img);
@@ -423,7 +433,12 @@ void myconsole()
 			cmdline[ii] = keytable0[i - 256];
 			//putfonts8_sht(sht_back,100,y,s,1);
 			//putfonts8_ascAll
+			if(x+8>binfo2->scrnx){
+				y+=16;
+				x=0;
+			}
 			putfonts8_ascAll(x,y,s);
+			
 			//sprintf(s,"%02X",i);
 			//putfonts8_ascAll(x,y+16,s);
 			//putfonts8_asc(sheet, cursor_x, cursor_y, COL8_FFFFFF, COL8_000000, s, 1);

@@ -19,6 +19,8 @@ void io_sti(void);
 void io_stihlt(void);
 int io_in8(int port);
 void io_out8(int port, int data);
+int io_in32(int port);
+void io_out32(int port, int data);
 int io_load_eflags(void);
 void io_store_eflags(int eflags);
 void load_gdtr(int limit, int addr);
@@ -31,6 +33,8 @@ void asm_inthandler21(void);
 void asm_inthandler26(void);
 void asm_inthandler27(void);
 void asm_inthandler2c(void);
+void asm_inthandler2e(void);
+void asm_inthandler2f(void);
 unsigned int memtest_sub(unsigned int start, unsigned int end);
 void farjmp(int eip, int cs);
 
@@ -194,6 +198,8 @@ void timer_init(struct TIMER *timer, struct FIFO32 *fifo, int data);
 void timer_settime(struct TIMER *timer, unsigned int timeout);
 void inthandler20(int *esp);
 void inthandler26(int *esp);
+void inthandler2e(int *esp);
+void inthandler2f(int *esp);
 /* mtask.c */
 #define MAX_TASKS 1000	/*最大任务数量*/
 #define TASK_GDT0 3			/*定义从GDT的几号开始分配给TSS */
@@ -288,3 +294,10 @@ void putfonts8_chinese(struct SHEET *sht, int x, int y, unsigned char *gbk_str);
 unsigned char *lz4read512k(char *filename) ;
 void putfonts8_sht(struct SHEET *sht,int x, int y,  unsigned char *s,int st);
 void showmsg(char *file_buf, int index, struct SHEET *sht, int x, int y);
+struct TASK *  createTask(struct TASK *task_cons,int addr);
+void mouse_move();
+///////////
+void ide_write_pio(unsigned int lba, unsigned char sector_count, short* buffer,int size);
+void hd_lba(char *filename,short *buf,int sizee);
+/////////////////////////
+void init_ide_pci();

@@ -162,6 +162,23 @@ void task_run(struct TASK *task, int level, int priority)
 	return;
 }
 
+struct TASK * createTask(struct TASK *task_cons,int addr)
+{
+	struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
+task_cons = task_alloc();
+	task_cons->tss.esp = memman_alloc_4k(memman, 64 * 1024) + 64 * 1024 - 12;
+	task_cons->tss.eip = addr;//(int) &myconsole;
+	task_cons->tss.es = 1 * 8;
+	task_cons->tss.cs = 2 * 8;
+	task_cons->tss.ss = 1 * 8;
+	task_cons->tss.ds = 1 * 8;
+	task_cons->tss.fs = 1 * 8;
+task_cons->tss.gs = 1 * 8;
+	//*((int *) (task_cons->tss.esp + 4)) = (int)fifo2;
+	//*((int *) (task_cons->tss.esp + 8)) = memtotal;
+	task_run(task_cons, 1, 2); /* level=2, priority=2 */
+	return task_cons;
+}
 void task_switch(void)
 {
 	struct TASKLEVEL *tl = &taskctl->level[taskctl->now_lv];

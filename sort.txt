@@ -1,0 +1,3 @@
+boot.bin 100
+haribote.sys 50
+boot.catalog 1

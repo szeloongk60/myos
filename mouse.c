@@ -4,7 +4,53 @@
 
 struct FIFO32 *mousefifo;
 int mousedata0;
-
+void mouse_move()
+{
+	extern struct MOUSE_DEC mdec;
+	extern struct SHEET*sht_mouse;
+	extern struct SHEET*sht_win;
+	struct BOOTINFO *binfo = (struct BOOTINFO *) ADR_BOOTINFO;
+	int fifobuf[128];
+	int i=0;
+	int mx,my;
+	char buf[30];
+	char buff[30];
+	char bigbuf[512];
+	
+	struct TASK *task = task_now();
+	fifo32_init(&task->fifo, 128, fifobuf, task);
+	int i2=0;
+	for (;;) {
+	if (fifo32_status(&task->fifo) != 0)  {
+			i = fifo32_get(&task->fifo);
+	
+				if (mouse_decode(&mdec, i - 512) != 0) {
+					/* 已经收集了3字节的数据，移动光标 */
+					mx += mdec.x;
+					my += mdec.y;
+					if (mx < 0) {
+						mx = 0;
+					}
+					if (my < 0) {
+						my = 0;
+					}
+					if (mx > binfo->scrnx - 1) {
+						mx = binfo->scrnx - 1;
+					}
+					if (my > binfo->scrny - 1) {
+						my = binfo->scrny - 1;
+					}
+					sheet_slide(sht_mouse, mx, my);/* 包含sheet_refresh含sheet_refresh */
+					if ((mdec.btn & 0x01) != 0) { /* 按下左键、移动sht_win */
+						sheet_slide(sht_win, mx - 8, my - 8);
+					}
+				}
+	
+	
+	}
+	}
+				
+}
 void inthandler2c(int *esp)
 /* 来自PS/2鼠标的中断 */
 {

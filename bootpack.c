@@ -7,8 +7,10 @@
 struct BOOTINFO *binfo = (struct BOOTINFO *) ADR_BOOTINFO;
 struct SHEET*sht_mouse;
 struct SHEET*sht_back;
+struct SHEET*sht_win;
 unsigned char *hzk_buf;
 unsigned char *chat_buf;
+struct MOUSE_DEC mdec;
 void HariMain(void)
 {
 	////////////////////////
@@ -25,9 +27,9 @@ void HariMain(void)
 	struct MOUSE_DEC mdec;
 	struct FIFO32 fifo2;
 	unsigned int *buf_back,buf_mouse[256];
-struct TASK *task_a, *task_cons;
+struct TASK *task_a, *task_cons,*task_mouse;
 struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
-	struct SHEET *sht_back,*sht_win, *sht_cons;
+	struct SHEET *sht_back,*sht_taskbar, *sht_cons;
 	//struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
 	//unsigned char *buf_back, buf_mouse[256], *buf_win, *buf_cons;
 	//struct SHEET *sht_back, *sht_mouse, *sht_win, *sht_cons;
@@ -35,6 +37,7 @@ struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
 	struct TIMER *timer;
 unsigned int *my_mouse_mem;
 unsigned int *win_mem;
+unsigned int *TB_mem;
 
 	int key_to = 0, key_shift = 0, key_leds = (binfo->leds >> 4) & 7, keycmd_wait = -1;
 
@@ -46,7 +49,7 @@ unsigned int *win_mem;
 	init_keyboard(&fifo, 256);
 	enable_mouse(&fifo, 512, &mdec);
 	io_out8(PIC0_IMR, 0x98); /* 设定PIT和PIC1以及键盘为许可(11111000) f8 98=fl*/
-	io_out8(PIC1_IMR, 0xef); /* 开放鼠标中断(11101111) */
+	io_out8(PIC1_IMR, 0xa7); /* 开放鼠标中断(11101111) af硬盘*/
 	boxfill(0,0,0,binfo->scrnx,binfo->scrny);
 putfonts8_asc(binfo->vram,binfo->pitch,0,0,0xff0000,"R");
 	putfonts8_asc(binfo->vram,binfo->pitch,50,0,0x00ff00,"G");
@@ -66,18 +69,8 @@ task_a = task_init(memman);
 	/*为了避免和键盘当前状态冲突，在一开始先进行设置*/
 	fifo32_put(&keycmd, KEYCMD_LED);
 	fifo32_put(&keycmd, key_leds);
-	task_cons = task_alloc();
-	task_cons->tss.esp = memman_alloc_4k(memman, 64 * 1024) + 64 * 1024 - 12;
-	task_cons->tss.eip = (int) &myconsole;
-	task_cons->tss.es = 1 * 8;
-	task_cons->tss.cs = 2 * 8;
-	task_cons->tss.ss = 1 * 8;
-	task_cons->tss.ds = 1 * 8;
-	task_cons->tss.fs = 1 * 8;
-	task_cons->tss.gs = 1 * 8;
-	//*((int *) (task_cons->tss.esp + 4)) = (int)fifo2;
-	//*((int *) (task_cons->tss.esp + 8)) = memtotal;
-	task_run(task_cons, 1, 2); /* level=2, priority=2 */
+	task_cons = createTask(task_cons,&myconsole);
+	task_mouse=createTask(task_mouse,&mouse_move);
 	
 	 FDinit();
 	 shtctl = shtctl_init(memman, binfo->vram, binfo->scrnx, binfo->scrny);
@@ -89,11 +82,15 @@ task_a = task_init(memman);
 	sht_win=sheet_alloc(shtctl);
 	win_mem=memman_alloc_4k(memman, (600 *600)*4);
 	sheet_setbuf(sht_win,win_mem,600,600,0xffffff);
+	
+	sht_taskbar=sheet_alloc(shtctl);
+	TB_mem=memman_alloc_4k(memman, (600 *600)*4);
+	sheet_setbuf(sht_taskbar,TB_mem,600,600,0x0);
 	 char *img=memget(300000);
 	 int tmp;
-	 
-	tmp=readfile("1.lz4",img);
 	
+	tmp=readfile("1.lz4",img);
+	//hd_lba("abcd.lz4",img,tmp);
 	load_mx_img(img);
 	//displayimage_sheet (img,sht_back,&win_mem) ;
 	
@@ -101,6 +98,7 @@ task_a = task_init(memman);
 	displayimage_sheet (img,sht_mouse,&my_mouse_mem) ;
 	hzk_buf=lz4read512k("HZK16.lz4");
 	draw_sprite(sht_win, 0, 0, 704,0, 901,151,0);
+	draw_sprite(sht_taskbar, 0, 0, 133,778, 417,813,0);
 	//chat_buf=
 	tmp=readfile("imgchat.dat",img);
 	showmsg(img, 25, sht_win, 16, 1);
@@ -111,14 +109,20 @@ task_a = task_init(memman);
 my = (binfo->scrny - 16) / 2;
 
 	sheet_slide(sht_back,  0,  0);
+	sheet_slide(sht_taskbar,10,binfo->scrny-50);
 	sheet_slide(sht_mouse, mx, my);
 	sheet_slide(sht_win,0,0);
 	sheet_updown(sht_back,  0);
 	sheet_updown(sht_win, 1);
-	sheet_updown(sht_mouse, 2);
+	sheet_updown(sht_mouse, 99);
+	sheet_updown(sht_taskbar,2);
 	sheet_refresh(sht_win, 0, 0, binfo->scrnx,binfo->scrny);
 	//createfile("ABC.TXT", "ADD SHOW END");
 	int data;
+	
+	io_sti();
+	 init_ide_pci() ;
+	sheet_refresh(sht_win, 0, 0, binfo->scrnx,binfo->scrny);
 	
 	for (;;) {
 	//	sheet_refresh(sht_back, 0, 0, binfo->scrnx,binfo->scrny);
@@ -129,7 +133,7 @@ my = (binfo->scrny - 16) / 2;
 			wait_KBC_sendready();
 			io_out8(PORT_KEYDAT, keycmd_wait);
 		}
-		io_cli();
+		//io_cli();
 		if (fifo32_status(&fifo) == 0) {
 			io_sti();
 		} else {
@@ -145,6 +149,7 @@ boxfill8(binfo->vram,binfo->scrnx,0,16,1,100,100);
 				if (i < 0x80 + 256) { /*将按键编码转换为字符编码*/
 					//	boxfill8(binfo->vram,binfo->scrnx,0,0,0,100,100);
 						fifo32_put(&task_cons->fifo, i);
+						//fifo32_put(&task_cons->fifo, i);
 						goto out;
 				}
 			}
@@ -158,28 +163,14 @@ boxfill8(binfo->vram,binfo->scrnx,0,16,1,100,100);
 				goto out;
 			}
 			 if (512 <= i && i <= 767) { /* 鼠标数据*/
-				if (mouse_decode(&mdec, i - 512) != 0) {
+				
+					fifo32_put(&task_mouse->fifo, i);
 					/* 已经收集了3字节的数据，移动光标 */
-					mx += mdec.x;
-					my += mdec.y;
-					if (mx < 0) {
-						mx = 0;
-					}
-					if (my < 0) {
-						my = 0;
-					}
-					if (mx > binfo->scrnx - 1) {
-						mx = binfo->scrnx - 1;
-					}
-					if (my > binfo->scrny - 1) {
-						my = binfo->scrny - 1;
-					}
-					sheet_slide(sht_mouse, mx, my);/* 包含sheet_refresh含sheet_refresh */
-					if ((mdec.btn & 0x01) != 0) { /* 按下左键、移动sht_win */
-						sheet_slide(sht_win, mx - 8, my - 8);
+				
+						//sheet_slide(sht_win, mx - 8, my - 8);
 						goto out;
-					}
-				}
+					
+				
 			}
 		}
 		out:

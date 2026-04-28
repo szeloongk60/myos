@@ -15,12 +15,14 @@
 		GLOBAL	_load_tr
 		GLOBAL	_asm_inthandler20, _asm_inthandler21
 		GLOBAL	_asm_inthandler27, _asm_inthandler2c
-		GLOBAL	_asm_inthandler26
+		GLOBAL	_asm_inthandler26, _asm_inthandler2e
+		GLOBAL	_asm_inthandler2f
 		GLOBAL	_memtest_sub
 		GLOBAL	_farjmp
 		EXTERN	_inthandler20, _inthandler21
 		EXTERN	_inthandler27, _inthandler2c
-		EXTERN	_inthandler26
+		EXTERN	_inthandler26,_inthandler2e
+		EXTERN	_inthandler2f
 
 [SECTION .text]
 
@@ -191,7 +193,38 @@ _asm_inthandler2c:
 		POP		DS
 		POP		ES
 		IRETD
+_asm_inthandler2e:
+		PUSH	ES
+		PUSH	DS
+		PUSHAD
+		MOV		EAX,ESP
+		PUSH	EAX
+		MOV		AX,SS
+		MOV		DS,AX
+		MOV		ES,AX
+		CALL	_inthandler2e
+		POP		EAX
+		POPAD
+		POP		DS
+		POP		ES
+		IRETD
 
+_asm_inthandler2f:
+		PUSH	ES
+		PUSH	DS
+		PUSHAD
+		MOV		EAX,ESP
+		PUSH	EAX
+		MOV		AX,SS
+		MOV		DS,AX
+		MOV		ES,AX
+		CALL	_inthandler2f
+		POP		EAX
+		POPAD
+		POP		DS
+		POP		ES
+		IRETD
+		
 _memtest_sub:	; unsigned int memtest_sub(unsigned int start, unsigned int end)
 		PUSH	EDI						; （由于还要使用EBX, ESI, EDI）
 		PUSH	ESI
