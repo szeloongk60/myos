@@ -298,6 +298,8 @@ struct TASK *  createTask(struct TASK *task_cons,int addr);
 void mouse_move();
 ///////////
 void ide_write_pio(unsigned int lba, unsigned char sector_count, short* buffer,int size);
-void hd_lba(char *filename,short *buf,int sizee);
+void hd_lba(char *filename,unsigned char *buf,int sizee);
 /////////////////////////
 void init_ide_pci();
+void ide_dma_write(unsigned int lba, unsigned char count, char *buf);
+void ide_dma_read(unsigned int lba, unsigned char count, char *buf);

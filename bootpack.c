@@ -44,12 +44,14 @@ unsigned int *TB_mem;
 	init_gdtidt();
 	init_pic();
 	io_sti(); /* IDT/PIC的初始化已经完成，于是开放CPU的中断 */
+	 
 	fifo32_init(&fifo, 128, fifobuf, 0);
 	init_pit();
 	init_keyboard(&fifo, 256);
 	enable_mouse(&fifo, 512, &mdec);
 	io_out8(PIC0_IMR, 0x98); /* 设定PIT和PIC1以及键盘为许可(11111000) f8 98=fl*/
 	io_out8(PIC1_IMR, 0xa7); /* 开放鼠标中断(11101111) af硬盘*/
+	
 	boxfill(0,0,0,binfo->scrnx,binfo->scrny);
 putfonts8_asc(binfo->vram,binfo->pitch,0,0,0xff0000,"R");
 	putfonts8_asc(binfo->vram,binfo->pitch,50,0,0x00ff00,"G");
@@ -73,6 +75,7 @@ task_a = task_init(memman);
 	task_mouse=createTask(task_mouse,&mouse_move);
 	
 	 FDinit();
+	 init_ide_pci() ;
 	 shtctl = shtctl_init(memman, binfo->vram, binfo->scrnx, binfo->scrny);
 	 sht_back  = sheet_alloc(shtctl);
 	 
@@ -88,9 +91,10 @@ task_a = task_init(memman);
 	sheet_setbuf(sht_taskbar,TB_mem,600,600,0x0);
 	 char *img=memget(300000);
 	 int tmp;
+	//io_sti();
 	
 	tmp=readfile("1.lz4",img);
-	//hd_lba("abcd.lz4",img,tmp);
+	hd_lba("abcd.lz4",img,tmp);
 	load_mx_img(img);
 	//displayimage_sheet (img,sht_back,&win_mem) ;
 	
@@ -120,8 +124,7 @@ my = (binfo->scrny - 16) / 2;
 	//createfile("ABC.TXT", "ADD SHOW END");
 	int data;
 	
-	io_sti();
-	 init_ide_pci() ;
+	
 	sheet_refresh(sht_win, 0, 0, binfo->scrnx,binfo->scrny);
 	
 	for (;;) {

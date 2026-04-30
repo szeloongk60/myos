@@ -30,7 +30,7 @@ void set_free(unsigned char *bitmap,int i) {
 // ------------------ 分配block ------------------
 int alloc_block(unsigned char *bitmap) {
 	int i;
-    for ( i = 0; i < 100; i++) {
+    for ( i = 0; i < 5120; i++) {
         if (is_free(bitmap,i)) {
             set_used(bitmap,i);
             return i+3;
@@ -39,21 +39,25 @@ int alloc_block(unsigned char *bitmap) {
     return -1;
 }
 
-void hd_lba(char *filename,short *buf,int sizee)
+void hd_lba(char *filename,unsigned char *buf,int sizee)
 {
 	struct HDINFO *hdf=memget(900*32);
-	unsigned char *bitmap=memget(512);
+	unsigned char *bitmap=memget(2097152/8);
 	int i;
 	int j,x;
-	ide_read_pio(1,1,bitmap);
-	ide_read_pio(2,1,hdf);
-	 int size = 0;
+	ide_dma_read(1,1,bitmap);
+	ide_dma_read(2,1,hdf);
+	volatile int size = 0;
 	  for (x = 0; x < 224; x++) {
         if (hdf[x].name[0] == 0x00) break; 
 	  }
 	  
-    while (buf[size] != 0) size++;
-	if(size<sizee){size=sizee;}
+  
+	if(sizee>0){
+		size=sizee;
+	}else if(sizee==0){
+		  while (buf[size] != 0){ size++;}
+	}
 	for (j = 0; j < 8; j++) hdf[x].name[j] = ' ';
             for (j = 0; j < 3; j++) hdf[x].ext[j] = ' ';
 
@@ -64,18 +68,26 @@ void hd_lba(char *filename,short *buf,int sizee)
 			
            hdf[x].type = 0x20;      // 归档文件
 		   int blocks = (size + 511) / 512;
+		
 		   int tmp=0;
+		   int offset = 0;
 		    while (hdf[x].reserve[tmp] != 0) tmp++;
 		   hdf[x].reserve[tmp] = alloc_block(bitmap);
-		ide_write_pio( hdf[x].reserve[tmp],1,buf + 0 * 512,0);
-			for ( i = 1; i < blocks; i++) {
-		ide_write_pio( alloc_block(bitmap),1,buf + i * 512,0);
+		ide_dma_write (hdf[x].reserve[tmp],1,buf + 0 * 512);
+		offset += 512;
+
+while (offset < size) {
+    ide_dma_write(alloc_block(bitmap), 1, buf + offset);
+    offset += 512;
 }
 			hdf[x].reserve[tmp+1] = blocks;
 			hdf[x].reserve[9]=0xff;
             hdf[x].size = size;
-			ide_write_pio(1,1,(unsigned char *)bitmap,0);
-	ide_write_pio(2,1, (unsigned char *)hdf,0); 
+			ide_dma_write(1,1,(unsigned char *)bitmap);
+	ide_dma_write(2,1, (unsigned char *)hdf); 
+	//char s[30];
+//	sprintf(s,"test%8x",size);
+	//createfile("ABC.TXT", s);
 	//ide_write_pio( hdf[x].reserve[0],1,(unsigned char *)buf,size);
 	
 }

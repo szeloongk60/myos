@@ -191,9 +191,9 @@ void init_ide_pci() {
 					io_out8(0x3F6, 0x00);
 					char* hdbuf=memget(1024*5);
 					  //////////////////////////////////////////////////////////////
-					  ide_dma_read(0,1,hdbuf);
-					  sprintf(temp,"测试%s",hdbuf);
-				createfile("ABC.TXT", temp);
+					//  ide_dma_read(0,1,hdbuf);
+					 // sprintf(temp,"测试%s",hdbuf);
+				//createfile("ABC.TXT", temp);
 
                 return; // 找
 			  ////////////////////////////////////////////////////////////////////
@@ -234,4 +234,41 @@ void ide_dma_read(unsigned int lba, unsigned char count, char *buf) {
         if (!(status & 0x01)) break; // 搬完了
         if (status & 0x02) { /* 错误处理 */ break; }
     }
+}
+void ide_dma_write(unsigned int lba, unsigned char count, char *buf) {
+    if (IDE_DMA_BASE == 0) return;
+
+    // 1. 设置 PRD 表（把 buf 里的内容搬到硬盘）
+    setup_prd(buf, count * 512);
+    io_out32(IDE_DMA_BASE + 4, (unsigned int)&my_prd);
+
+    // 2. 准备 DMA 控制器
+    // 注意：这里是 0x00，不是 0x08！ 
+    // Bit 3 = 0 表示从内存写入硬盘 (Memory to Device)
+    io_out8(IDE_DMA_BASE + 0, 0x00); 
+    io_out8(IDE_DMA_BASE + 2, 0x06); // 清理状态位
+
+    // 3. 设置 ATA 寻址参数
+    wait_ide_ready();
+    io_out8(0x1F6, 0xE0 | ((lba >> 24) & 0x0F)); 
+    io_out8(0x1F2, count);
+    io_out8(0x1F3, lba & 0xFF);
+    io_out8(0x1F4, (lba >> 8) & 0xFF);
+    io_out8(0x1F5, (lba >> 16) & 0xFF);
+
+    // 4. 发送写命令并启动
+    io_out8(0x1F7, 0xCA); // 关键修改：0xCA 是 DMA WRITE 命令
+    
+    // 合闸：Bit 0 设为 1 启动。此时 Bit 3 依然是 0（写方向）
+    io_out8(IDE_DMA_BASE + 0, 0x01); 
+
+    // 5. 轮询等待完成
+    while (1) {
+        unsigned char status = io_in8(IDE_DMA_BASE + 2);
+        if (!(status & 0x01)) break; 
+        if (status & 0x02) { /* 错误处理 */ break; }
+    }
+    
+    /* 写入完成后，最好发送一个缓存刷新命令（可选但推荐） */
+     io_out8(0x1F7, 0xE7); // Flush Cache
 }
