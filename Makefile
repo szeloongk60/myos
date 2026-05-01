@@ -60,7 +60,6 @@ haribote.img : $(BUILD)/ipl10.bin $(BUILD)/haribote.sys Makefile rule110.bf
 		copy from:$(BUILD)/haribote.sys to:@: \
 		copy from:rule110.bf to:@: \
 		copy from:cur.lz4 to:@: \
-		copy from:1.lz4 to:@: \
 		copy from:HZK16.lz4 to:@: \
 		copy from:msotxt.lz4 to:@: \
 		copy from:imgchat.dat to:@: \

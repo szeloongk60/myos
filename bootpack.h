@@ -303,3 +303,4 @@ void hd_lba(char *filename,unsigned char *buf,int sizee);
 void init_ide_pci();
 void ide_dma_write(unsigned int lba, unsigned char count, char *buf);
 void ide_dma_read(unsigned int lba, unsigned char count, char *buf);
+int readfile_hd(const char *filename, char *buf);

@@ -93,8 +93,9 @@ task_a = task_init(memman);
 	 int tmp;
 	//io_sti();
 	
-	tmp=readfile("1.lz4",img);
-	hd_lba("abcd.lz4",img,tmp);
+	//tmp=readfile("1.lz4",img);
+	tmp=readfile_hd("abcd.lz4",img);
+	//hd_lba("abcd.lz4",img,tmp);
 	load_mx_img(img);
 	//displayimage_sheet (img,sht_back,&win_mem) ;
 	

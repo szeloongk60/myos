@@ -38,15 +38,88 @@ int alloc_block(unsigned char *bitmap) {
     }
     return -1;
 }
+struct HDINFO *hdf;
+unsigned char *bitmap;
+char bitread;
+void readbit()
+{
+	if(bitread == 0){
+		
+		hdf=memget(900*32);
+		bitmap=memget(2097152/8);
+		ide_dma_read(1,1,bitmap);
+		ide_dma_read(2,1,hdf);
+		bitread=1;
+	
+	}
+	
+}
 
+int findfile_hd(const char *filename)
+{
+	readbit();
+	 char s[11];
+    int x, y;
+
+    // --- 第一步：把 "make.bat" 转成 "MAKE    BAT" ---
+    for (y = 0; y < 11; y++) s[y] = ' '; // 填充空格
+    y = 0;
+    for (x = 0; y < 11 && filename[x] != 0; x++) {
+        if (filename[x] == '.' && y <= 8) {
+            y = 8; // 强制跳到扩展名位置
+        } else {
+            char c = filename[x];
+            if ('a' <= c && c <= 'z') c -= 0x20; // 转大写
+            s[y] = c;
+            y++;
+        }
+    }
+
+    // --- 第二步：在磁盘根目录里找这个名字 ---
+    for (x = 0; x < 224; x++) {
+        if (hdf[x].name[0] == 0x00) break; // 目录结束
+        if (hdf[x].name[0] == 0xe5) continue; // 已删除文件
+        
+        // 忽略卷标和非普通文件
+        if ((hdf[x].type & 0x18) != 0) continue; 
+
+        // 比较 11 字节
+        int match = 1;
+        for (y = 0; y < 11; y++) {
+            if (hdf[x].name[y] != s[y]) {
+                match = 0;
+                break;
+            }
+        }
+        
+        if (match) return x; //finfo[x].clustno; // 找到了！返回簇号
+    }
+
+    return 0; // 没找到
+	
+}
+int readfile_hd(const char *filename, char *buf)
+{
+	int x= findfile_hd(filename);
+	int i;
+	if(hdf[x].reserve[0] ==0){return 0;}
+	 char *p = buf;
+	int st=hdf[x].reserve[0];
+	int en=hdf[x].reserve[1];
+	for(i=st;i<en;i++)
+	{
+	//	void ide_dma_read(unsigned int lba, unsigned char count, char *buf)
+		ide_dma_read(i,1,p);
+		p+=512;
+	}
+	
+}
 void hd_lba(char *filename,unsigned char *buf,int sizee)
 {
-	struct HDINFO *hdf=memget(900*32);
-	unsigned char *bitmap=memget(2097152/8);
+	
 	int i;
 	int j,x;
-	ide_dma_read(1,1,bitmap);
-	ide_dma_read(2,1,hdf);
+	readbit();
 	volatile int size = 0;
 	  for (x = 0; x < 224; x++) {
         if (hdf[x].name[0] == 0x00) break; 
