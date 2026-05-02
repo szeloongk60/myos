@@ -59,6 +59,7 @@ haribote.img : $(BUILD)/ipl10.bin $(BUILD)/haribote.sys Makefile rule110.bf
 		wbinimg src:$(BUILD)/ipl10.bin len:512 from:0 to:0 \
 		copy from:$(BUILD)/haribote.sys to:@: \
 		copy from:rule110.bf to:@: \
+		copy from:1.lz4 to:@: \
 		copy from:cur.lz4 to:@: \
 		copy from:HZK16.lz4 to:@: \
 		copy from:msotxt.lz4 to:@: \

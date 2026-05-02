@@ -12,34 +12,34 @@ struct HDINFO {
 	unsigned char name[8], ext[3], type;
 	unsigned int reserve[10];
 	unsigned int size;
-};
+}__attribute__((packed)); //
 //uint8_t bitmap[1024 / 8];  
-
-int is_free(unsigned char *bitmap,int i) {
+unsigned char *bitmap;
+int is_free(int i) {
     return !(bitmap[i / 8] & (1 << (i % 8)));
 }
 
-void set_used(unsigned char *bitmap,int i) {
+void set_used(int i) {
     bitmap[i / 8] |= (1 << (i % 8));
 }
 
-void set_free(unsigned char *bitmap,int i) {
+void set_free(int i) {
     bitmap[i / 8] &= ~(1 << (i % 8));
 }
 
 // ------------------ 分配block ------------------
-int alloc_block(unsigned char *bitmap) {
-	int i;
-    for ( i = 0; i < 5120; i++) {
-        if (is_free(bitmap,i)) {
-            set_used(bitmap,i);
+int alloc_block(int i) {
+	
+    for (  ;i < 5120; i++) {
+        if (is_free(i)) {
+            set_used(i);
             return i+3;
         }
     }
     return -1;
 }
 struct HDINFO *hdf;
-unsigned char *bitmap;
+
 char bitread;
 void readbit()
 {
@@ -54,7 +54,39 @@ void readbit()
 	}
 	
 }
-
+void printhd()
+{
+		int x,y;
+	char s[90];
+	char c[90];
+	char cc[90];
+	int yy=16;
+	putfonts8_ascAll(0,0,"test");
+	
+	for (x = 0; x < 224; x++) {
+		if (hdf[x].name[0] == 0x00) {
+			break;
+		}
+		if (hdf[x].name[0] != 0xe5) {
+				if ((hdf[x].type & 0x18) == 0) {
+						sprintf(s, "filename.ext %7d", hdf[x].size);
+						sprintf(c, "s= %x", hdf[x].reserve[0]);
+						sprintf(cc, "E= %x", hdf[x].reserve[1]);
+						for (y = 0; y < 8; y++) {
+								s[y] = hdf[x].name[y];
+						}
+						s[ 9] = hdf[x].ext[0];
+						s[10] = hdf[x].ext[1];
+						s[11] = hdf[x].ext[2];
+						s[12]="|";
+						putfonts8_ascAll(0,yy,s);
+						putfonts8_ascAll(200,yy,c);
+						putfonts8_ascAll(270,yy,cc);
+						yy+=16;
+				}
+		}
+	}
+}
 int findfile_hd(const char *filename)
 {
 	readbit();
@@ -69,7 +101,7 @@ int findfile_hd(const char *filename)
             y = 8; // 强制跳到扩展名位置
         } else {
             char c = filename[x];
-            if ('a' <= c && c <= 'z') c -= 0x20; // 转大写
+           // if ('a' <= c && c <= 'z') c -= 0x20; // 转大写
             s[y] = c;
             y++;
         }
@@ -95,12 +127,13 @@ int findfile_hd(const char *filename)
         if (match) return x; //finfo[x].clustno; // 找到了！返回簇号
     }
 
-    return 0; // 没找到
+    return 9999; // 没找到
 	
 }
 int readfile_hd(const char *filename, char *buf)
 {
 	int x= findfile_hd(filename);
+	if (x== 9999){return 0;}
 	int i;
 	if(hdf[x].reserve[0] ==0){return 0;}
 	 char *p = buf;
@@ -119,10 +152,17 @@ void hd_lba(char *filename,unsigned char *buf,int sizee)
 	
 	int i;
 	int j,x;
+	int tt;
 	readbit();
 	volatile int size = 0;
+	int st=0;
 	  for (x = 0; x < 224; x++) {
-        if (hdf[x].name[0] == 0x00) break; 
+		  
+        if (hdf[x].name[0] == 0x00) {
+			st=hdf[x-1].reserve[1];
+			break; 
+		}
+		
 	  }
 	  
   
@@ -145,15 +185,16 @@ void hd_lba(char *filename,unsigned char *buf,int sizee)
 		   int tmp=0;
 		   int offset = 0;
 		    while (hdf[x].reserve[tmp] != 0) tmp++;
-		   hdf[x].reserve[tmp] = alloc_block(bitmap);
+		   hdf[x].reserve[tmp] = alloc_block(st);
 		ide_dma_write (hdf[x].reserve[tmp],1,buf + 0 * 512);
 		offset += 512;
 
 while (offset < size) {
-    ide_dma_write(alloc_block(bitmap), 1, buf + offset);
+	tt=alloc_block(st);
+    ide_dma_write(tt, 1, buf + offset);
     offset += 512;
 }
-			hdf[x].reserve[tmp+1] = blocks;
+			hdf[x].reserve[tmp+1] = tt;
 			hdf[x].reserve[9]=0xff;
             hdf[x].size = size;
 			ide_dma_write(1,1,(unsigned char *)bitmap);

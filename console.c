@@ -151,10 +151,6 @@ void dir()
 				}
 		}
 	}
-		
-unsigned char status;
-putfonts8_sht(sht_win,10,99,"int2e",0);
-putfonts8_sht(sht_win,10,90,"int2e",1);
 }
 typedef enum {
     PUSH, POP,ADD, SUB, PRINT, HALT,JMP
@@ -357,12 +353,12 @@ void myconsole()
 				 if(strcmp(cmdline, "F") == 0){
 					
 					boxfill(0,0,0,900,900);
-					
-					char *img=memget(512);
+					 printhd();
+					//char *img=memget(512);
 					//img="testimgggggeeerr";
-					memset(img, 0, 512);
-					strcpy(img, "testimgggggeeerr");    
-					hd_lba("abcd.txt",img,0);
+				//	memset(img, 0, 512);
+					//strcpy(img, "testimgggggeeerr");    
+					//hd_lba("abcd.txt",img,0);
 					
 				//	readfile("cur.lz4",img);
 					

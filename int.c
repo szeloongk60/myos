@@ -37,6 +37,8 @@ void inthandler27(int *esp)
 }
 
 	extern struct SHEET*sht_back;
+	unsigned int IDE_DMA_BASE = 0; 
+	int dma_done_flag=0;
 void inthandler2e(int *esp)
 {
 unsigned char status;
@@ -44,8 +46,7 @@ putfonts8_ascAll(200,16,"int 2e");
 putfonts8_sht(sht_back,120,16,"int 2e",0);
     /* 1. 通知 PIC0 和 PIC1：中断受理已经开始（发送 EOI） */
     /* 因为 IRQ 14 在从片上，必须先向从片发送，再向主片发送 */
-    io_out8(PIC1_OCW2, 0x66); // 0x66 是针对 IRQ 14 的特定的 EOI (0x60 + 6)
-    io_out8(PIC0_OCW2, 0x62); // 0x62 是针对 IRQ 2 (从片级联位) 的 EOI (0x60 + 2)
+  
 
     /* 或者使用通用的 EOI 发送方式（取决于你的系统实现） */
     // io_out8(0xa0, 0x20); 
@@ -54,16 +55,18 @@ putfonts8_sht(sht_back,120,16,"int 2e",0);
     /* 2. 读取 Bus Master IDE 的状态寄存器并清理中断标志位 */
     /* 这是 DMA 模式下最关键的一步，不清理这个位，下次 DMA 无法启动 */
     // dma_io_base 是你之前从 PCI BAR4 拿到的地址
-  //  status = io_in8(dma_io_base + 2);
-  //  io_out8(dma_io_base + 2, status | 0x04); // 往 Bit 2 写 1 即可清零该位
+   status = io_in8(IDE_DMA_BASE + 2);
+    io_out8(IDE_DMA_BASE + 2, status | 0x04); // 往 Bit 2 写 1 即可清零该位
 
     /* 3. 读取硬盘状态寄存器 (0x1F7) */
     /* 这一步是为了让硬盘控制器知道 CPU 已经响应，从而撤销 IRQ 信号 */
     status = io_in8(0x1F7); 
+	  io_out8(PIC1_OCW2, 0x66); // 0x66 是针对 IRQ 14 的特定的 EOI (0x60 + 6)
+    io_out8(PIC0_OCW2, 0x62); // 0x62 是针对 IRQ 2 (从片级联位) 的 EOI (0x60 + 2)
  
     /* 4. 执行你的后续逻辑 */
     // 比如设置一个全局变量标识传输已完成
-    //dma_done_flag = 1;
+    dma_done_flag = 1;
 
     return;
 
@@ -153,7 +156,7 @@ void wait_ide_ready() {
         }
     }
 }
-unsigned int IDE_DMA_BASE = 0; // 存 BAR4
+// 存 BAR4
 
 void init_ide_pci() {
 	unsigned int bus;
@@ -206,8 +209,8 @@ void init_ide_pci() {
 	
 }
 void ide_dma_read(unsigned int lba, unsigned char count, char *buf) {
-    if (IDE_DMA_BASE == 0) return; // 没扫到硬件
-
+    if (IDE_DMA_BASE == 0 ) return; // 没扫到硬件
+	dma_done_flag=0;
     // 1. 设置 PRD 表（注意：buf 必须是物理地址）
     setup_prd(buf, count * 512);
     io_out32(IDE_DMA_BASE + 4, (unsigned int)&my_prd);
@@ -229,10 +232,10 @@ void ide_dma_read(unsigned int lba, unsigned char count, char *buf) {
     io_out8(IDE_DMA_BASE + 0, 0x08 | 0x01); // START!
 
     // 5. 等待 (如果你用了中断，这里可以改成等待信号量，现在先轮询)
-    while (1) {
-        unsigned char status = io_in8(IDE_DMA_BASE + 2);
-        if (!(status & 0x01)) break; // 搬完了
-        if (status & 0x02) { /* 错误处理 */ break; }
+	int a=0;
+    while (!dma_done_flag) {
+		if(a>10000){break;}
+        a++;
     }
 }
 void ide_dma_write(unsigned int lba, unsigned char count, char *buf) {

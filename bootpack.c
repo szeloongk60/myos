@@ -92,20 +92,26 @@ task_a = task_init(memman);
 	 char *img=memget(300000);
 	 int tmp;
 	//io_sti();
-	
-	//tmp=readfile("1.lz4",img);
-	tmp=readfile_hd("abcd.lz4",img);
-	//hd_lba("abcd.lz4",img,tmp);
+	int test=0;
+	if(test=1){
+	tmp=readfile("1.lz4",img);
+	hd_lba("1.lz4",img,tmp);
+	}else{tmp=readfile_hd("1.lz4",img);}
 	load_mx_img(img);
 	//displayimage_sheet (img,sht_back,&win_mem) ;
-	
+	memset(img, 0, 300000); // 将 img 指向的 300,000 字节全部设为 0
+	if(test=1){
 	tmp=readfile("cur.lz4",img);
+	hd_lba("cur.lz4",img,tmp);
+	}else{tmp=readfile_hd("cur.lz4",img);}
 	displayimage_sheet (img,sht_mouse,&my_mouse_mem) ;
 	hzk_buf=lz4read512k("HZK16.lz4");
 	draw_sprite(sht_win, 0, 0, 704,0, 901,151,0);
 	draw_sprite(sht_taskbar, 0, 0, 133,778, 417,813,0);
 	//chat_buf=
+	if(tmp>0){
 	tmp=readfile("imgchat.dat",img);
+	}
 	showmsg(img, 25, sht_win, 16, 1);
 	showmsg(img, 23, sht_win, 16, 30);
 	showmsg(img, 24, sht_win, 16, 65);
