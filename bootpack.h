@@ -305,3 +305,7 @@ void ide_dma_write(unsigned int lba, unsigned char count, char *buf);
 void ide_dma_read(unsigned int lba, unsigned char count, char *buf);
 int readfile_hd(const char *filename, char *buf);
 void printhd();
+void check_packet();
+void init_e1000();
+void init_e1000_tx();
+void e1000_send_packet(void *packet, int len) ;

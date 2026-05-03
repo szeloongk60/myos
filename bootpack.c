@@ -93,14 +93,14 @@ task_a = task_init(memman);
 	 int tmp;
 	//io_sti();
 	int test=0;
-	if(test=1){
+	if(test==1){
 	tmp=readfile("1.lz4",img);
 	hd_lba("1.lz4",img,tmp);
 	}else{tmp=readfile_hd("1.lz4",img);}
 	load_mx_img(img);
 	//displayimage_sheet (img,sht_back,&win_mem) ;
-	memset(img, 0, 300000); // 将 img 指向的 300,000 字节全部设为 0
-	if(test=1){
+	//memset(img, 0, 300000); // 将 img 指向的 300,000 字节全部设为 0
+	if(test==1){
 	tmp=readfile("cur.lz4",img);
 	hd_lba("cur.lz4",img,tmp);
 	}else{tmp=readfile_hd("cur.lz4",img);}
@@ -133,10 +133,12 @@ my = (binfo->scrny - 16) / 2;
 	
 	
 	sheet_refresh(sht_win, 0, 0, binfo->scrnx,binfo->scrny);
-	
+	init_e1000();
+	init_e1000_tx();
 	for (;;) {
 	//	sheet_refresh(sht_back, 0, 0, binfo->scrnx,binfo->scrny);
 	//sheet_refresh(sht_mouse, 0, 0, binfo->scrnx,binfo->scrny);
+	check_packet();
 		if (fifo32_status(&keycmd) > 0 && keycmd_wait < 0) {
 			/*如果存在向键盘控制器发送的数据，则发送它 */
 			keycmd_wait = fifo32_get(&keycmd);
