@@ -35,6 +35,7 @@ void asm_inthandler27(void);
 void asm_inthandler2c(void);
 void asm_inthandler2e(void);
 void asm_inthandler2f(void);
+void asm_inthandler29(void);
 unsigned int memtest_sub(unsigned int start, unsigned int end);
 void farjmp(int eip, int cs);
 
@@ -190,6 +191,10 @@ struct TIMERCTL {
 	struct TIMER *t0;
 	struct TIMER timers0[MAX_TIMER];
 };
+struct PICBAR {
+	unsigned int IDE_DMA_BASE;
+	unsigned int NET_DMA_BASE; 
+};
 extern struct TIMERCTL timerctl;
 void init_pit(void);
 struct TIMER *timer_alloc(void);
@@ -198,6 +203,7 @@ void timer_init(struct TIMER *timer, struct FIFO32 *fifo, int data);
 void timer_settime(struct TIMER *timer, unsigned int timeout);
 void inthandler20(int *esp);
 void inthandler26(int *esp);
+void inthandler29(int *esp);
 void inthandler2e(int *esp);
 void inthandler2f(int *esp);
 /* mtask.c */
@@ -309,3 +315,4 @@ void check_packet();
 void init_e1000();
 void init_e1000_tx();
 void e1000_send_packet(void *packet, int len) ;
+void send_dhcp_discover() ;

@@ -16,13 +16,13 @@
     16 00000000                                 		GLOBAL	_asm_inthandler20, _asm_inthandler21
     17 00000000                                 		GLOBAL	_asm_inthandler27, _asm_inthandler2c
     18 00000000                                 		GLOBAL	_asm_inthandler26, _asm_inthandler2e
-    19 00000000                                 		GLOBAL	_asm_inthandler2f
+    19 00000000                                 		GLOBAL	_asm_inthandler2f,_asm_inthandler29
     20 00000000                                 		GLOBAL	_memtest_sub
     21 00000000                                 		GLOBAL	_farjmp
     22 00000000                                 		EXTERN	_inthandler20, _inthandler21
     23 00000000                                 		EXTERN	_inthandler27, _inthandler2c
     24 00000000                                 		EXTERN	_inthandler26,_inthandler2e
-    25 00000000                                 		EXTERN	_inthandler2f
+    25 00000000                                 		EXTERN	_inthandler2f,_inthandler29
     26 00000000                                 
     27                                          [SECTION .text]
     28 00000000                                 
@@ -225,39 +225,55 @@
    225 00000120 07                              		POP		ES
    226 00000121 CF                              		IRETD
    227 00000122                                 		
-   228 00000122                                 _memtest_sub:	; unsigned int memtest_sub(unsigned int start, unsigned int end)
-   229 00000122 57                              		PUSH	EDI						; （由于还要使用EBX, ESI, EDI）
-   230 00000123 56                              		PUSH	ESI
-   231 00000124 53                              		PUSH	EBX
-   232 00000125 BE AA55AA55                     		MOV		ESI,0xaa55aa55			; pat0 = 0xaa55aa55;
-   233 0000012A BF 55AA55AA                     		MOV		EDI,0x55aa55aa			; pat1 = 0x55aa55aa;
-   234 0000012F 8B 44 24 10                     		MOV		EAX,[ESP+12+4]			; i = start;
-   235 00000133                                 mts_loop:
-   236 00000133 89 C3                           		MOV		EBX,EAX
-   237 00000135 81 C3 00000FFC                  		ADD		EBX,0xffc				; p = i + 0xffc;
-   238 0000013B 8B 13                           		MOV		EDX,[EBX]				; old = *p;
-   239 0000013D 89 33                           		MOV		[EBX],ESI				; *p = pat0;
-   240 0000013F 83 33 FF                        		XOR		DWORD [EBX],0xffffffff	; *p ^= 0xffffffff;
-   241 00000142 3B 3B                           		CMP		EDI,[EBX]				; if (*p != pat1) goto fin;
-   242 00000144 75 18                           		JNE		mts_fin
-   243 00000146 83 33 FF                        		XOR		DWORD [EBX],0xffffffff	; *p ^= 0xffffffff;
-   244 00000149 3B 33                           		CMP		ESI,[EBX]				; if (*p != pat0) goto fin;
-   245 0000014B 75 11                           		JNE		mts_fin
-   246 0000014D 89 13                           		MOV		[EBX],EDX				; *p = old;
-   247 0000014F 05 00001000                     		ADD		EAX,0x1000				; i += 0x1000;
-   248 00000154 3B 44 24 14                     		CMP		EAX,[ESP+12+8]			; if (i <= end) goto mts_loop;
-   249 00000158 76 D9                           		JBE		mts_loop
-   250 0000015A 5B                              		POP		EBX
-   251 0000015B 5E                              		POP		ESI
-   252 0000015C 5F                              		POP		EDI
-   253 0000015D C3                              		RET
-   254 0000015E                                 mts_fin:
-   255 0000015E 89 13                           		MOV		[EBX],EDX				; *p = old;
-   256 00000160 5B                              		POP		EBX
-   257 00000161 5E                              		POP		ESI
-   258 00000162 5F                              		POP		EDI
-   259 00000163 C3                              		RET
-   260 00000164                                 
-   261 00000164                                 _farjmp:		; void farjmp(int eip, int cs);
-   262 00000164 FF 6C 24 04                     		JMP    FAR [ESP+4]    ; eip, cs
-   263 00000168 C3                              		RET
+   228 00000122                                 _asm_inthandler29:
+   229 00000122 06                              		PUSH	ES
+   230 00000123 1E                              		PUSH	DS
+   231 00000124 60                              		PUSHAD
+   232 00000125 89 E0                           		MOV		EAX,ESP
+   233 00000127 50                              		PUSH	EAX
+   234 00000128 66 8C D0                        		MOV		AX,SS
+   235 0000012B 8E D8                           		MOV		DS,AX
+   236 0000012D 8E C0                           		MOV		ES,AX
+   237 0000012F E8 [00000000]                   		CALL	_inthandler29
+   238 00000134 58                              		POP		EAX
+   239 00000135 61                              		POPAD
+   240 00000136 1F                              		POP		DS
+   241 00000137 07                              		POP		ES
+   242 00000138 CF                              		IRETD
+   243 00000139                                 		
+   244 00000139                                 _memtest_sub:	; unsigned int memtest_sub(unsigned int start, unsigned int end)
+   245 00000139 57                              		PUSH	EDI						; （由于还要使用EBX, ESI, EDI）
+   246 0000013A 56                              		PUSH	ESI
+   247 0000013B 53                              		PUSH	EBX
+   248 0000013C BE AA55AA55                     		MOV		ESI,0xaa55aa55			; pat0 = 0xaa55aa55;
+   249 00000141 BF 55AA55AA                     		MOV		EDI,0x55aa55aa			; pat1 = 0x55aa55aa;
+   250 00000146 8B 44 24 10                     		MOV		EAX,[ESP+12+4]			; i = start;
+   251 0000014A                                 mts_loop:
+   252 0000014A 89 C3                           		MOV		EBX,EAX
+   253 0000014C 81 C3 00000FFC                  		ADD		EBX,0xffc				; p = i + 0xffc;
+   254 00000152 8B 13                           		MOV		EDX,[EBX]				; old = *p;
+   255 00000154 89 33                           		MOV		[EBX],ESI				; *p = pat0;
+   256 00000156 83 33 FF                        		XOR		DWORD [EBX],0xffffffff	; *p ^= 0xffffffff;
+   257 00000159 3B 3B                           		CMP		EDI,[EBX]				; if (*p != pat1) goto fin;
+   258 0000015B 75 18                           		JNE		mts_fin
+   259 0000015D 83 33 FF                        		XOR		DWORD [EBX],0xffffffff	; *p ^= 0xffffffff;
+   260 00000160 3B 33                           		CMP		ESI,[EBX]				; if (*p != pat0) goto fin;
+   261 00000162 75 11                           		JNE		mts_fin
+   262 00000164 89 13                           		MOV		[EBX],EDX				; *p = old;
+   263 00000166 05 00001000                     		ADD		EAX,0x1000				; i += 0x1000;
+   264 0000016B 3B 44 24 14                     		CMP		EAX,[ESP+12+8]			; if (i <= end) goto mts_loop;
+   265 0000016F 76 D9                           		JBE		mts_loop
+   266 00000171 5B                              		POP		EBX
+   267 00000172 5E                              		POP		ESI
+   268 00000173 5F                              		POP		EDI
+   269 00000174 C3                              		RET
+   270 00000175                                 mts_fin:
+   271 00000175 89 13                           		MOV		[EBX],EDX				; *p = old;
+   272 00000177 5B                              		POP		EBX
+   273 00000178 5E                              		POP		ESI
+   274 00000179 5F                              		POP		EDI
+   275 0000017A C3                              		RET
+   276 0000017B                                 
+   277 0000017B                                 _farjmp:		; void farjmp(int eip, int cs);
+   278 0000017B FF 6C 24 04                     		JMP    FAR [ESP+4]    ; eip, cs
+   279 0000017F C3                              		RET

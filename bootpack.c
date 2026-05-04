@@ -50,7 +50,7 @@ unsigned int *TB_mem;
 	init_keyboard(&fifo, 256);
 	enable_mouse(&fifo, 512, &mdec);
 	io_out8(PIC0_IMR, 0x98); /* 设定PIT和PIC1以及键盘为许可(11111000) f8 98=fl*/
-	io_out8(PIC1_IMR, 0xa7); /* 开放鼠标中断(11101111) af硬盘*/
+	io_out8(PIC1_IMR, 0xe7); /* 开放鼠标中断(11101111) a7硬盘*/
 	
 	boxfill(0,0,0,binfo->scrnx,binfo->scrny);
 putfonts8_asc(binfo->vram,binfo->pitch,0,0,0xff0000,"R");
@@ -133,8 +133,11 @@ my = (binfo->scrny - 16) / 2;
 	
 	
 	sheet_refresh(sht_win, 0, 0, binfo->scrnx,binfo->scrny);
+	io_cli();
 	init_e1000();
 	init_e1000_tx();
+	io_sti();
+	send_dhcp_discover() ;
 	for (;;) {
 	//	sheet_refresh(sht_back, 0, 0, binfo->scrnx,binfo->scrny);
 	//sheet_refresh(sht_mouse, 0, 0, binfo->scrnx,binfo->scrny);
@@ -147,10 +150,10 @@ my = (binfo->scrny - 16) / 2;
 		}
 		//io_cli();
 		if (fifo32_status(&fifo) == 0) {
-			io_sti();
+			//io_sti();
 		} else {
 			i = fifo32_get(&fifo);
-			io_sti();
+			//io_sti();
 			///////////////////
 /*			data = io_in8(0x3f4);
 			sprintf(ss,"%02X",data);

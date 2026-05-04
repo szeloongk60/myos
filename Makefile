@@ -2,7 +2,7 @@ BUILD = build
 
 OBJS_BOOTPACK = $(BUILD)/bootpack.obj $(BUILD)/naskfunc.obj $(BUILD)/hankaku.obj $(BUILD)/graphic.obj $(BUILD)/dsctbl.obj \
 		$(BUILD)/int.obj $(BUILD)/fifo.obj $(BUILD)/keyboard.obj $(BUILD)/mouse.obj $(BUILD)/memory.obj $(BUILD)/sheet.obj $(BUILD)/timer.obj \
-		$(BUILD)/mtask.obj $(BUILD)/window.obj $(BUILD)/console.obj $(BUILD)/file.obj $(BUILD)/fd.obj $(BUILD)/lz4.obj $(BUILD)/hd.obj
+		$(BUILD)/mtask.obj $(BUILD)/window.obj $(BUILD)/console.obj $(BUILD)/file.obj $(BUILD)/fd.obj $(BUILD)/lz4.obj $(BUILD)/hd.obj $(BUILD)/net.obj
 TOOLPATH = ../z_tools/
 INCPATH  = ../z_tools/haribote/
 

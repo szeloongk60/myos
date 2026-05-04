@@ -354,6 +354,7 @@ void myconsole()
 					
 					boxfill(0,0,0,900,900);
 					 printhd();
+					 send_dhcp_discover() ;
 					//char *img=memget(512);
 					//img="testimgggggeeerr";
 				//	memset(img, 0, 512);
