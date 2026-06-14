@@ -3,4 +3,4 @@
 
 "An unpolished OS, currently equipped with floppy/HDD access and rudimentary networking. Let us stand on the shoulders of the humble changemakers, turning this spark into a blaze as we push the boundaries forward."
 
-制作工具：30天制作操作系统的tool
+制作工具：30天制作操作系统的tool https://github.com/yourtion/30dayMakeOS/tree/master/tolset
